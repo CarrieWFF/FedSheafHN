@@ -11,8 +11,8 @@ The neural sheaf model is from: [neural-sheaf-diffusion](https://github.com/twit
 
 The data generator is from: [FED-PUB](https://github.com/JinheonBaek/FED-PUB).
 
-## Citation
-If you find our work useful, please cite us as follows:
+## Credits
+For attribution in academic contexts, please use the bibtex entry below:
 ```
 @misc{liang2024fedsheafhn,
       title={FedSheafHN: Personalized Federated Learning on Graph-structured Data}, 
