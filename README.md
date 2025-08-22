@@ -27,7 +27,7 @@ Modify the script for different datasets and hyperparameters.
 ## Reference
 Our code is developed based on the following repo:
 
-The neural sheaf model is from: [neural-sheaf-diffusion](https://github.com/twitter-research/neural-sheaf-diffusion/tree/master).
+The sheaf diffusion model is from: [neural-sheaf-diffusion](https://github.com/twitter-research/neural-sheaf-diffusion/tree/master).
 
 The data generator is from: [FED-PUB](https://github.com/JinheonBaek/FED-PUB).
 
