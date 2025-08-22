@@ -17,12 +17,12 @@ python overlapping.py
 ```
 
 ## Reproducing Results
-To reproduce our main results:
+To reproduce the main results:
 ```bash
-sh ./scripts/disjoint.sh`
-sh ./scripts/overlapping.sh`
+sh ./scripts/disjoint.sh
+sh ./scripts/overlapping.sh
 ```
-Modify the script for different datasets and hyparameters.
+Modify the script for different datasets and hyperparameters.
 
 ## Reference
 Our code is developed based on the following repo:
