@@ -1,0 +1,33 @@
+python main_formal.py  --model 'fedsheaf'\
+                --dataset 'ogbn-arxiv' \
+                --mode 'disjoint' \
+                --frac 1.0 \
+                --n-clients 10\
+                --server-model 'DiagSheaf'\
+                --client_vector_epochs 50\
+                --client_train_epochs 10\
+                --client_dropout 0.6\
+                --server_lr 0.001\
+                --server_hn_lr 0.01\
+                --client_lr 0.01\
+                --seed 435\
+                --txt_no 1\
+                --n-rnds 150\
+                --gpu 0
+
+python main_formal.py  --model 'fedsheaf'\
+                --dataset 'ogbn-arxiv' \
+                --mode 'disjoint' \
+                --frac 1.0 \
+                --n-clients 20\
+                --server-model 'DiagSheaf'\
+                --client_vector_epochs 50\
+                --client_train_epochs 10\
+                --client_dropout 0.6\
+                --server_lr 0.001\
+                --server_hn_lr 0.001\
+                --client_lr 0.01\
+                --seed 435\
+                --txt_no 2\
+                --n-rnds 150\
+                --gpu 0

@@ -1,4 +1,4 @@
-# Copyright 2024 Wenfei Liang. 
+# Copyright 2025 Wenfei Liang. 
 # All rights reserved. 
 
 import torch
@@ -18,7 +18,7 @@ class Client:
         self.sd = sd
         self.gpu_id = g_id
         self.args = args 
-        self._args = vars(self.args) 
+        self._args = vars(self.args)
         self.client_id = client_id
         self.loader = DataLoader(self.args)
         self.logger = Logger(self.args, self.gpu_id)
@@ -26,7 +26,7 @@ class Client:
         self.model = GCN
         
         if args.dataset == 'Cora':
-            self.args.n_classes = 7 
+            self.args.n_classes = 7
         elif args.dataset == 'CiteSeer': 
             self.args.n_classes = 6
         elif args.dataset == 'PubMed':
@@ -37,12 +37,11 @@ class Client:
             self.args.n_classes = 10
         elif args.dataset == 'Photo':
             self.args.n_classes = 8
-        
+
     def init_state(self):
         for _, batch in enumerate(self.loader.pa_loader):
             self.args.graph_size = batch.x.size(0)
             self.args.input_dim = batch.num_features
-            
             self.model = self.model(self.args.input_dim, self.args.client_hidden_dim, self.args.n_classes, self.args).cuda(self.gpu_id)
             self.parameters = list(self.model.parameters())
 
@@ -77,15 +76,13 @@ class Client:
                 train_lss = F.cross_entropy(out[batch.train_mask], batch.y[batch.train_mask])
                 train_lss.backward()
                 self.optimizer.step()
-
                 if epoch == self.args.client_vector_epochs - 1: 
                     self.model.eval()
                     with torch.no_grad():
                         embedding_tmp = self.model(batch, is_proxy=True)
         
         average_embedding = torch.mean(embedding_tmp, dim=0, keepdim=True)
-
-        self.sd[client_id] = {'functional_embedding': average_embedding.clone().detach()}
+        self.sd[client_id] = {'functional_embedding': average_embedding.clone().detach()}  
 
     @torch.no_grad()
     def eval_model(self, mode='test'):
@@ -164,7 +161,7 @@ class Client:
             val_train_acc, val_train_lss = self.eval_model(mode='valid')
             test_train_acc, test_train_lss = self.eval_model(mode='test')
             train_train_acc, train_train_lss = self.eval_model(mode='train')
-
+        
         if update_client_embedding: 
             self.model.eval()
             with torch.no_grad():
@@ -177,7 +174,7 @@ class Client:
 
             del embedding_tmp
             del average_embedding
-        ################################
+
         # calculate delta param
         delta_param['gcn1.weight'] = final_param['conv1.weight'] - generated_param['gcn1.weight']
         delta_param['gcn1.bias'] = final_param['conv1.bias'] - generated_param['gcn1.bias']

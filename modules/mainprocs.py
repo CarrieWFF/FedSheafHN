@@ -1,9 +1,8 @@
-# Copyright 2024 Wenfei Liang. 
+# Copyright 2025 Wenfei Liang. 
 # All rights reserved. 
 
 import os
 import sys
-import time
 import atexit
 import numpy as np
 import copy
@@ -48,18 +47,19 @@ class MainProcess:
                 self.update_client_embedding = True
             else: 
                 self.update_client_embedding = False
-            st = time.time()
-            ############################# generate client graph ####################################
+            
+            ############################# generate collaboration graph ####################################
             if curr_rnd == 0:
                 message_type = 'client_generate_vector_start'
                 for client_id in range(self.args.n_clients):
-                    client = self.clients[client_id]
-                    client.switch_state(client_id)
-                    client.on_receive_message(curr_rnd, message_type)
-                    client.generate_vector(client_id)
+                        client = self.clients[client_id]
+                        client.switch_state(client_id)
+                        client.on_receive_message(curr_rnd, message_type)
+                        client.generate_vector(client_id)
                         
                 self.allclients = list(range(self.args.n_clients))
                 self.server.construct_graph(self.allclients, curr_rnd)
+
             ############################## train server model #######################################
             self.server.on_round_begin(curr_rnd)
             self.server.train_server_GNN(curr_rnd)
@@ -71,6 +71,7 @@ class MainProcess:
                 client = self.clients[client_id]
                 client.on_receive_message(curr_rnd, message_type)
                 client.train_client_model(self.update_client_embedding)
+            
             ############################## update server HN ###############################
             self.server.update_server_HN(self.selected)
 
@@ -78,10 +79,7 @@ class MainProcess:
                 self.server.construct_graph(self.allclients, curr_rnd)
 
             self.server.round_end(curr_rnd, self.allclients, self.selected)
-            
-            print(f'[main] server model GNN and HN have been trained at round {curr_rnd}, ({time.time()-st:.2f}s)')
             self.server.save_state()
 
         best_val_acc, best_test_acc = self.server.procs_end()
-
         return best_val_acc, best_test_acc

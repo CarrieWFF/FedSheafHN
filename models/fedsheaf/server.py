@@ -1,4 +1,4 @@
-# Copyright 2024 Wenfei Liang. 
+# Copyright 2025 Wenfei Liang. 
 # All rights reserved. 
 
 import torch
@@ -19,13 +19,9 @@ class Server:
         self.logger = Logger(self.args, self.gpu_id, is_server=True)
         
         self.model = DiscreteDiagSheafDiffusion
-        
         self.model_hn = GNNHyperNetwork
-        
         self.client_graph = {}
-        self.log = {
-            'total_val_acc': [], 'total_test_acc': [],
-        }
+        self.log = {'total_val_acc': [], 'total_test_acc': []}
 
     def on_round_begin(self, curr_rnd):
         self.round_begin = time.time()
@@ -44,11 +40,15 @@ class Server:
         self.log['total_val_acc'].append(sum(val_acc_tmp)/len(val_acc_tmp))
         self.log['total_test_acc'].append(sum(test_acc_tmp)/len(test_acc_tmp))
         print(f'in round test acc {self.log['total_test_acc'][-1]}')
+
+    def procs_end(self):
+        best_val = max(self.log['total_val_acc'])
+        best_test = max(self.log['total_test_acc'])
+        return best_val, best_test
         
-        ################################ construct client graph ##################
+        ################################ construct collaboration graph ##################
     def construct_graph(self, updated, curr_rnd):
-        # Generate the client graph with client graph-level embeddings
-        st = time.time()
+        # Generate the collaboration graph with client graph-level embeddings
         client_embeddings = []
 
         for c_id in sorted(updated):
@@ -58,19 +58,15 @@ class Server:
             del self.sd[c_id]['functional_embedding']
 
         embeddings = torch.cat(client_embeddings, dim=0)
-
         edges = [[i, j] for i in range(len(updated)) for j in range(len(updated)) if i != j]
-        edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()  # Transpose to match PyG's format
-
+        edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
         self.client_graph = Data(x=embeddings, edge_index=edge_index).cuda(self.gpu_id)
-
         del client_embeddings
         del embeddings
 
         self.args.graph_size = self.client_graph.x.size(0)
         self.args.input_dim = self.client_graph.num_features
         self.args.output_dim = self.args.input_dim
-        self.logger.print(f'[server] client graph has been constructed ({time.time()-st:.2f}s)')
 
         if self.args.server_sheaf_decay is None:
             self.args.server_sheaf_decay = self.args.server_weight_decay
@@ -79,7 +75,6 @@ class Server:
     def train_server_GNN(self, curr_rnd):
         if curr_rnd == 0:
             self.model = self.model(self.client_graph.edge_index, self.args).cuda(self.gpu_id)
-
             sheaf_learner_params, other_params = self.model.grouped_parameters()
             self.optimizer_gnn = torch.optim.Adam([
                 {'params': sheaf_learner_params, 'weight_decay': self.args.server_sheaf_decay},
@@ -96,18 +91,17 @@ class Server:
 
         self.model.train()
         self.updated_embedding = self.model(self.client_graph.x)
-
         self.grad_tensor = torch.zeros_like(self.updated_embedding)
 
-    def train_server_HN(self, curr_rnd): 
+    def train_server_HN(self, curr_rnd):
         ############################ Hypernetwork generate model params ##################################
         self.optimizer_hn.zero_grad()
         self.model_hn.train()
 
         if hasattr(self, 'eb_tmp'):
             del self.eb_tmp
-        self.eb_tmp = self.updated_embedding.clone()
 
+        self.eb_tmp = self.updated_embedding.clone()
         self.eb_tmp.requires_grad_(True)
         self.eb_tmp.retain_grad()
         self.gcn_params = self.model_hn(self.eb_tmp)
@@ -119,17 +113,15 @@ class Server:
             for i, (in_f, out_f) in enumerate(self.args.gcn_layer_dims):
                 weight_size = in_f * out_f
                 bias_size = out_f
-
                 weights[f'gcn{i+1}.weight'] = client_params_tmp[pointer:pointer + weight_size].view(in_f, out_f)
                 pointer += weight_size
-
                 weights[f'gcn{i+1}.bias'] = client_params_tmp[pointer:pointer + bias_size].view(out_f)
                 pointer += bias_size
 
             self.sd[c_id] = {'generated model params': {k: v.clone().detach() for k, v in weights.items()}}
 
         ################################# update server model ############################################
-    def update_server_HN(self, updated): 
+    def update_server_HN(self, updated):
         collected_delta_params = []
         keys_order = ['gcn1.weight', 'gcn1.bias', 'gcn2.weight', 'gcn2.bias']
 
@@ -171,9 +163,7 @@ class Server:
         self.optimizer_gnn.zero_grad()
         torch.autograd.backward(self.updated_embedding, grad_tensors=[self.grad_tensor])
         self.optimizer_gnn.step()
-
         self.save_state()
-        print(f'[server] server GNN have updated gradients')
 
     def load_state(self):
         loaded = torch_load(self.args.checkpt_path, 'server_state.pt')

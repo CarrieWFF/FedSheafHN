@@ -1,4 +1,4 @@
-# Copyright 2024 Wenfei Liang. 
+# Copyright 2025 Wenfei Liang. 
 # All rights reserved. 
 
 import os
@@ -11,7 +11,7 @@ from modules.mainprocs import MainProcess
 
 def main(args):
     args = set_config(args)
-   
+    
     if args.model == 'fedsheaf':    
         from models.fedsheaf.server import Server
         from models.fedsheaf.client import Client
@@ -49,17 +49,6 @@ def set_config(args):
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
-
-    n_runs = args.n_runs
-    
-    s_weightdecay = [0.0005] 
-    s_HN_hidden_dim = [128]
-    c_weightdecay = [0.0005] 
-    c_hidden_dim = [128]
-
-    s_lr = [0.001]
-    s_hn_lr = [0.01]
-    c_lr = [0.01]
    
     best_result_info = {
         "path": None,
@@ -91,32 +80,16 @@ if __name__ == '__main__':
         "client_hidden_dim": None,
         "client_train_epochs": 0
         }
-    
+       
     filename = f'../logs/{args.dataset}_{args.mode}/clients_{args.n_clients}/params_results_{args.txt_no}.txt'
-
-    args.server_lr = s_lr
-    args.server_weight_decay = s_weight_decay
-    args.server_sheaf_decay = s_weight_decay
-
-    args.HN_hidden_dim = s_HN_hidden_dim
-    args.server_hn_lr = s_hn_lr
-
-    args.client_lr = c_lr
-    args.client_weight_decay = c_weight_decay
-    args.client_hidden_dim = c_hidden_dim
-
-    args.server_dropout = server_dropout
-    args.hn_dropout = hn_dropout
-    args.client_dropout = client_dropout
-
     best_val = []
     best_test = []
-    for run_no in range(n_runs): 
+    for run_no in range(args.n_runs): 
         args.seed = args.seed + run_no
         val_tmp, test_tmp = main(args)
         best_val.append(val_tmp)
         best_test.append(test_tmp)
-        
+
     best_val_acc = np.mean(np.array(best_val)*100)
     best_test_acc = np.mean(np.array(best_test)*100)
     test_std = np.std(np.array(best_test)*100)
@@ -139,6 +112,8 @@ if __name__ == '__main__':
     param_result["client_dropout"] = args.client_dropout
     param_result["server_dropout"] = args.server_dropout
     param_result["hn_dropout"] = args.hn_dropout
+    param_result["server_hidden_channels"] = args.server_hidden_channels
+    param_result["server_input_dropout"] = args.server_input_dropout
 
     with open(filename, 'a') as f:
         json.dump(param_result, f, indent=2)
@@ -160,6 +135,8 @@ if __name__ == '__main__':
         best_result_info["client_dropout"] = args.client_dropout
         best_result_info["server_dropout"] = args.server_dropout
         best_result_info["hn_dropout"] = args.hn_dropout
+        best_result_info["server_hidden_channels"] = args.server_hidden_channels
+        best_result_info["server_input_dropout"] = args.server_input_dropout
 
         with open(filename, 'a') as f:
             json.dump(best_result_info,f,indent=2)

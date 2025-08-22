@@ -21,11 +21,11 @@ class DiscreteDiagSheafDiffusion(SheafDiffusion):
         super(DiscreteDiagSheafDiffusion, self).__init__(edge_index, args)
         assert args.server_d > 0
 
-        #################### [WF 1] ##########################
+        ####################### [WF 1] #######################
         self.graph_size = args.graph_size
         self.input_dim = args.input_dim
         self.output_dim = args.output_dim
-        ######################################################
+        ################################################
 
         self.lin_right_weights = nn.ModuleList()
         self.lin_left_weights = nn.ModuleList()
@@ -43,7 +43,6 @@ class DiscreteDiagSheafDiffusion(SheafDiffusion):
         self.sheaf_learners = nn.ModuleList()
 
         num_sheaf_learners = min(self.layers, self.layers if self.nonlinear else 1)
-
 
         for i in range(num_sheaf_learners):
             if self.sparse_learner:
@@ -105,6 +104,5 @@ class DiscreteDiagSheafDiffusion(SheafDiffusion):
 
         x = x.reshape(self.graph_size, -1)
         x = self.lin2(x)
-
         return x # [WF 2]
     #F.log_softmax(x, dim=1)

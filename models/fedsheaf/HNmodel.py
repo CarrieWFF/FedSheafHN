@@ -1,4 +1,4 @@
-# Copyright 2024 Wenfei Liang. 
+# Copyright 2025 Wenfei Liang. 
 # All rights reserved. 
 
 import torch
@@ -18,7 +18,6 @@ class GNNHyperNetwork(nn.Module):
 
         # Store dimensions
         self.num_clients = num_clients
-
         self.feature_dim = feature_dim
         self.hidden_dim = hidden_dim
         self.gcn_layer_dims = gcn_layer_dims
